@@ -1,0 +1,77 @@
+{
+    "name": "my-env",
+    "version": "1.0.0",
+    "dependencies": [
+      "fontconfig",
+      "boost-core",
+      "boost-locale",
+      "boost-algorithm",
+      "beast",
+      "boost-asio",
+      "boost-headers",
+      "boost-thread",
+      "boost-system",
+      "boost-filesystem",
+      {
+        "name":"boost-iostreams",
+        "features": [
+          "bzip2",
+          "lzma",
+          "zlib",
+          "zstd"
+        ]
+      },
+      {
+        "name":"jsoncpp"
+      },
+      {
+        "name": "gdal",
+        "features": [ "archive","cfitsio","curl","expat","freexl","geos","gif","hdf5","iconv","jpeg",
+        "kea",
+        "lerc",
+        "libkml",
+        "libspatialite",
+        "libxml2",
+        "lzma",
+        "mysql-libmariadb",
+        "netcdf",
+        "openjpeg",
+        "openssl",
+        "pcre2",
+        "png",
+        "poppler",
+        "postgresql",
+        "qhull",
+        "recommended-features",
+        "sqlite3",
+        "system-libraries",
+        "tools",
+        "webp",
+        "zstd" ]
+      },
+      {
+        "name":"osg",
+        "features": [ "collada","fontconfig","freetype","nvtt","packages","plugins","tools" ]
+      },
+      {
+        "name":"libzip",
+        "features": [ "bzip2","commoncrypto","default-aes","liblzma","mbedtls","openssl","wincrypto","zstd" ]
+      },
+      {
+        "name":"asio",
+        "features": [ "coroutine","openssl","regex" ]
+      },
+      {
+        "name":"spdlog",
+        "features": [ "benchmark" ]
+      },
+      {
+        "name":"gtest"
+      },
+      {
+        "name":"benchmark"
+      }
+
+    ]
+  }
+
