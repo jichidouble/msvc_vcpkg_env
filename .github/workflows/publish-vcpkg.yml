@@ -1,0 +1,38 @@
+name: Publish vcpkg binaries
+
+# 手动触发，或者根据你的发布流程改成 on: push: tags: [...]
+on:
+  workflow_dispatch:
+
+jobs:
+  package-and-release:
+    runs-on: windows-2019
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Bootstrap vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          cd vcpkg
+          git checkout 2024.04.15
+          .\bootstrap-vcpkg.bat --disableMetrics
+
+      - name: Install all Manifest 依赖
+        run: |
+          cd vcpkg
+          .\vcpkg.exe install --triplet x64-windows
+
+      - name: 打包 vcpkg 二进制
+        run: |
+          cd vcpkg
+          powershell -Command "Compress-Archive -Path installed,packages,buildtrees,downloads -DestinationPath ../vcpkg-binaries.zip"
+
+      - name: 创建 GitHub Release 并上传附件
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: vcpkg-binaries       # Release 名称，可自定义
+          files: vcpkg-binaries.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
