@@ -1,0 +1,74 @@
+# .github/workflows/ci-build.yml
+name: CI Build with vcpkg Cache
+
+# Allow reading Releases for gh CLI
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install CMake 3.28
+        uses: lukka/get-cmake@v3
+        with:
+          cmakeVersion: 3.28.0
+
+      - name: Download existing vcpkg-cache.zip (if any)
+        run: |
+          gh release download vcpkg-cache \
+            --repo "${{ github.repository }}" \
+            --pattern vcpkg-cache.zip \
+            --clobber
+        shell: bash
+        continue-on-error: true
+
+      - name: Extract previous cache
+        shell: powershell
+        run: |
+          if (Test-Path vcpkg-cache.zip) {
+            mkdir prev-cache
+            Expand-Archive vcpkg-cache.zip -DestinationPath prev-cache -Force
+          }
+
+      - name: Setup MSVC v142 (VS2019)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          toolset: 14.2
+
+      - name: Clone & bootstrap vcpkg@2024.12.16
+        run: |
+          git clone --branch 2024.12.16 https://github.com/microsoft/vcpkg.git vcpkg
+          cd vcpkg
+          .\bootstrap-vcpkg.bat -DisableMetrics
+
+      - name: Inject prebuilt cache into vcpkg
+        shell: powershell
+        run: |
+          if (Test-Path prev-cache\installed)  { robocopy prev-cache\installed  vcpkg\installed  /E /NJH /NJS }
+          if (Test-Path prev-cache\packages)   { robocopy prev-cache\packages   vcpkg\packages   /E /NJH /NJS }
+          if (Test-Path prev-cache\buildtrees) { robocopy prev-cache\buildtrees vcpkg\buildtrees /E /NJH /NJS }
+          if (Test-Path prev-cache\downloads)  { robocopy prev-cache\downloads  vcpkg\downloads  /E /NJH /NJS }
+
+      - name: Configure & build with CMake + MSVC v142
+        run: |
+          cmake -G "Visual Studio 16 2019" -A x64 \
+            -S . -B build \
+            -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
