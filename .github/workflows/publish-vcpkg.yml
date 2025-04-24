@@ -14,9 +14,8 @@ jobs:
 
       - name: Bootstrap vcpkg
         run: |
-          git clone https://github.com/microsoft/vcpkg.git
+          git clone --branch 2024.04.26 https://github.com/microsoft/vcpkg.git
           cd vcpkg
-          git checkout 2024.04.15
           .\bootstrap-vcpkg.bat --disableMetrics
 
       - name: Install all Manifest 依赖
