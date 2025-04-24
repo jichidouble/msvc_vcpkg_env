@@ -66,11 +66,15 @@ jobs:
       - name: Package vcpkg binary cache
         shell: powershell
         run: |
-          # 删除旧的缓存包，避免 Compress-Archive 报错
-          $zip = "../vcpkg-cache.zip"
+          # 切到 vcpkg 目录，那里才有 installed/, packages/ 等
+          Set-Location vcpkg
+          # 目标 zip 放回到工作区根
+          $zip = Join-Path $env:GITHUB_WORKSPACE "vcpkg-cache.zip"
           if (Test-Path $zip) { Remove-Item $zip -Force }
-          # 重新打包
+          # 打包四大目录
           Compress-Archive -Path installed,packages,buildtrees,downloads -DestinationPath $zip
+          # （可选）切回根目录
+          Pop-Location
 
       - name: Create or update GitHub Release & upload cache
         uses: softprops/action-gh-release@v1
