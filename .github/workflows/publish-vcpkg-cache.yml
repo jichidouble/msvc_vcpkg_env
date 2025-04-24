@@ -1,21 +1,17 @@
 # .github/workflows/publish-vcpkg-cache.yml
 name: Publish vcpkg Binary Cache
 
-# 手动触发
 on:
   workflow_dispatch:
 
-# 允许读取仓库内容（Release）用于下载已有资产
 permissions:
   contents: read
 
 jobs:
   publish:
-    # 最长运行 360 分钟（6 小时）
     timeout-minutes: 360
     runs-on: windows-latest
 
-    # GH_TOKEN 让 gh CLI 自动使用 GITHUB_TOKEN 进行认证
     env:
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -24,8 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download existing vcpkg-cache.zip (if any)
-        # 如果仓库已有 vcpkg-cache Release，则拉取 zip，否则继续
+      - name: Download existing cache (if any)
         run: |
           gh release download vcpkg-cache \
             --repo "${{ github.repository }}" \
@@ -34,7 +29,7 @@ jobs:
         shell: bash
         continue-on-error: true
 
-      - name: Extract previous cache if exists
+      - name: Extract previous cache
         shell: powershell
         run: |
           if (Test-Path vcpkg-cache.zip) {
@@ -53,7 +48,7 @@ jobs:
           cd vcpkg
           .\bootstrap-vcpkg.bat -DisableMetrics
 
-      - name: Inject previous cache into vcpkg
+      - name: Inject previous cache
         shell: powershell
         run: |
           if (Test-Path prev-cache\installed)  { robocopy prev-cache\installed  vcpkg\installed  /E /NJH /NJS }
@@ -62,17 +57,17 @@ jobs:
           if (Test-Path prev-cache\downloads)  { robocopy prev-cache\downloads  vcpkg\downloads  /E /NJH /NJS }
 
       - name: Install all dependencies via manifest (incremental)
+        # 切到 cmd，让 --x-install-root 语法正常
+        shell: cmd
         run: |
           cd vcpkg
-          .\vcpkg.exe install \
-            --x-install-root=installed \
-            --triplet x64-windows \
-            --recurse
+          .\vcpkg.exe install --x-install-root=installed --triplet x64-windows --recurse
 
       - name: Package vcpkg binary cache
+        shell: powershell
         run: |
           cd vcpkg
-          powershell -Command "Compress-Archive -Path installed,packages,buildtrees,downloads -DestinationPath ../vcpkg-cache.zip"
+          Compress-Archive -Path installed,packages,buildtrees,downloads -DestinationPath ../vcpkg-cache.zip
 
       - name: Create or update GitHub Release & upload cache
         uses: softprops/action-gh-release@v1
