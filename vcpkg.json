@@ -4,12 +4,6 @@
     "dependencies": [
       {
         "name":"jsoncpp"
-      },
-      {
-        "name":"spdlog"
-      },
-      {
-        "name":"gtest"
       }
     ]
   }
