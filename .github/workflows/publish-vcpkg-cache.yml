@@ -49,12 +49,12 @@ jobs:
           .\bootstrap-vcpkg.bat -DisableMetrics
 
       - name: Inject previous cache
-        shell: powershell
+        shell: cmd
         run: |
-          if (Test-Path prev-cache\installed)  { robocopy prev-cache\installed  vcpkg\installed  /E /NJH /NJS }
-          if (Test-Path prev-cache\packages)   { robocopy prev-cache\packages   vcpkg\packages   /E /NJH /NJS }
-          if (Test-Path prev-cache\buildtrees) { robocopy prev-cache\buildtrees vcpkg\buildtrees /E /NJH /NJS }
-          if (Test-Path prev-cache\downloads)  { robocopy prev-cache\downloads  vcpkg\downloads  /E /NJH /NJS }
+          if exist prev-cache\installed  ( robocopy prev-cache\installed  vcpkg\installed  /E /NJH /NJS || exit /b 0 )
+          if exist prev-cache\packages ( robocopy prev-cache\packages   vcpkg\packages   /E /NJH /NJS || exit /b 0 )
+          if exist prev-cache\buildtrees ( robocopy prev-cache\buildtrees vcpkg\buildtrees /E /NJH /NJS || exit /b 0 )
+          if exist prev-cache\downloads ( robocopy prev-cache\downloads  vcpkg\downloads  /E /NJH /NJS || exit /b 0 )
 
       - name: Install all dependencies via manifest (incremental)
         # 切到 cmd，让 --x-install-root 语法正常
