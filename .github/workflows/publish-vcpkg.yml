@@ -14,14 +14,14 @@ jobs:
 
       - name: Bootstrap vcpkg
         run: |
-          git clone --branch 2024.04.26 https://github.com/microsoft/vcpkg.git
+          git clone --branch 2024.12.16 https://github.com/microsoft/vcpkg.git
           cd vcpkg
           .\bootstrap-vcpkg.bat --disableMetrics
 
       - name: Install all Manifest 依赖
         run: |
           cd vcpkg
-          .\vcpkg.exe install --triplet x64-windows
+          .\vcpkg.exe install --triplet x64-windows --recurse --keep-going
 
       - name: 打包 vcpkg 二进制
         run: |
