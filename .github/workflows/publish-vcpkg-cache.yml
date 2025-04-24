@@ -1,6 +1,6 @@
+# .github/workflows/publish-vcpkg-cache.yml
 name: Publish vcpkg Binary Cache
 
-# 手动触发
 on:
   workflow_dispatch:
 
@@ -11,12 +11,28 @@ jobs:
     runs-on: windows-latest
 
     env:
-      # vcpkg 根目录
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Download existing vcpkg-cache.zip (if any)
+        uses: softprops/action-download-release-asset@v1
+        with:
+          repository: ${{ github.repository }}
+          tag: vcpkg-cache
+          asset: vcpkg-cache.zip
+          output: vcpkg-cache.zip
+        continue-on-error: true
+
+      - name: Extract previous cache if exists
+        shell: powershell
+        run: |
+          if (Test-Path vcpkg-cache.zip) {
+            mkdir prev-cache
+            Expand-Archive vcpkg-cache.zip -DestinationPath prev-cache -Force
+          }
 
       - name: Setup MSVC v142 (VS2019)
         uses: ilammy/msvc-dev-cmd@v1
@@ -29,22 +45,31 @@ jobs:
           cd vcpkg
           .\bootstrap-vcpkg.bat -DisableMetrics
 
-      - name: Install all dependencies via manifest
+      - name: Inject previous cache into vcpkg
+        shell: powershell
+        run: |
+          if (Test-Path prev-cache\installed)  { robocopy prev-cache\installed  vcpkg\installed  /E /NJH /NJS }
+          if (Test-Path prev-cache\packages)   { robocopy prev-cache\packages   vcpkg\packages   /E /NJH /NJS }
+          if (Test-Path prev-cache\buildtrees) { robocopy prev-cache\buildtrees vcpkg\buildtrees /E /NJH /NJS }
+          if (Test-Path prev-cache\downloads)  { robocopy prev-cache\downloads  vcpkg\downloads  /E /NJH /NJS }
+
+      - name: Install all dependencies via manifest (incremental)
         run: |
           cd vcpkg
-          # 自动读取仓库根目录的 vcpkg.json
-          .\vcpkg.exe install --triplet x64-windows --recurse
+          .\vcpkg.exe install \
+            --x-install-root=installed \
+            --triplet x64-windows \
+            --recurse
 
       - name: Package vcpkg binary cache
         run: |
           cd vcpkg
-          # 打包四大核心目录为 zip
           powershell -Command "Compress-Archive -Path installed,packages,buildtrees,downloads -DestinationPath ../vcpkg-cache.zip"
 
-      - name: Create GitHub Release & upload cache
+      - name: Create or update GitHub Release & upload cache
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: vcpkg-cache           # Release tag，可按需改
+          tag_name: vcpkg-cache
           files: vcpkg-cache.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
