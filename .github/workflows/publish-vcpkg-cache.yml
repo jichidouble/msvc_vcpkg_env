@@ -1,0 +1,42 @@
+name: Publish vcpkg Binary Cache
+
+# 手动触发
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    # 超时时间 6 小时
+    timeout-minutes: 360
+    runs-on: windows-2019
+
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Clone & bootstrap vcpkg@2024.12.16
+        run: |
+          git clone --branch 2024.12.16 https://github.com/microsoft/vcpkg.git vcpkg
+          cd vcpkg
+          .\bootstrap-vcpkg.bat --disableMetrics
+
+      - name: Install all dependencies via manifest
+        run: |
+          cd vcpkg
+          .\vcpkg.exe install --triplet x64-windows --recurse
+
+      - name: Package vcpkg binary cache
+        run: |
+          cd vcpkg
+          powershell -Command "Compress-Archive -Path installed,packages,buildtrees,downloads -DestinationPath ../vcpkg-cache.zip"
+
+      - name: Create GitHub Release & upload cache
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: vcpkg-cache           # Release tag，可自定义
+          files: vcpkg-cache.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
