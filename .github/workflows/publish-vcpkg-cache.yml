@@ -76,6 +76,15 @@ jobs:
           # （可选）切回根目录
           Pop-Location
 
+      - name: Package vcpkg binary cache
+        shell: bash
+        run: |
+          cd vcpkg
+          # 如果之前有旧包，先删掉
+          rm -f ../vcpkg-cache.zip
+          # 用 tar -a 创建 ZIP（流式写入，不会把整个包读到内存）
+          tar -a -c -f ../vcpkg-cache.zip installed packages buildtrees downloads
+
       - name: Create or update GitHub Release & upload cache
         uses: softprops/action-gh-release@v1
         with:
