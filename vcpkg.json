@@ -15,6 +15,41 @@
       "name":"jsoncpp"
     },
     {
+      "name": "gdal",
+      "features": [ 
+        "archive",
+        "cfitsio",
+        "curl",
+        "expat",
+        "freexl",
+        "geos",
+        "gif",
+        "hdf5",
+        "iconv",
+        "jpeg",
+        "kea",
+        "lerc",
+        "libkml",
+        "libspatialite",
+        "libxml2",
+        "lzma",
+        "mysql-libmariadb",
+        "netcdf",
+        "openjpeg",
+        "openssl",
+        "pcre2",
+        "png",
+        "poppler",
+        "postgresql",
+        "qhull",
+        "recommended-features",
+        "sqlite3",
+        "system-libraries",
+        "tools",
+        "webp",
+        "zstd" ]
+    },
+    {
       "name":"spdlog"
     },
     {
